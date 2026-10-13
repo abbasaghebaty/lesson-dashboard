@@ -3,6 +3,9 @@ const COLORS = ["#12b886", "#3b82f6", "#f5a623", "#e5484d", "#8b5cf6", "#0ea5e9"
 
 export default {
   async fetch(request, env) {
+    // Everything except the API is the dashboard page itself (static assets).
+    if (new URL(request.url).pathname !== "/api/data") return env.ASSETS.fetch(request);
+
     const cors = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
