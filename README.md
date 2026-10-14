@@ -1,15 +1,15 @@
-# Study Planner — modular Cloudflare D1 project
+# Lesson Dashboard — Cloudflare Worker + D1
 
 این نسخه برای **دیتابیس D1 موجود** تنظیم شده است. ساختار دیتابیس از خروجی واقعی `sqlite_master` که کاربر ارائه کرده گرفته شده و قرار نیست جدول‌های موجود دوباره ساخته شوند.
 
 ## ساختار پروژه
 
-- `public/study-dashboard.html` — داشبورد؛ داده‌ها را از `/api/data` می‌خواند و هر ۳۰ ثانیه تازه‌سازی می‌کند.
+- `public/index.html` و `public/study-dashboard.html` — داشبورد؛ صفحهٔ اصلی در آدرس ریشهٔ Worker نمایش داده می‌شود و داده‌ها را از `/api/data` می‌خواند.
 - `src/index.js` — ورودی Worker، CORS، بررسی سلامت و مسیریابی.
 - `src/routes/data.js` — کوئری‌های خواندن اطلاعات موردنیاز داشبورد.
 - `src/routes/mutations.js` — ماژول مستقل عملیات نوشتن برای توسعه بعدی.
 - `src/lib/http.js` — توابع کمکی HTTP.
-- `wrangler.toml` — اتصال به D1 موجود با binding به نام `DB`.
+- `wrangler.toml` — اتصال به D1 موجود با binding به نام `DB`. فایل‌های استاتیک از پوشهٔ `public` سرو می‌شوند؛ `/api/*` همچنان توسط Worker پردازش می‌شود.
 
 ## نکات حیاتی دیتابیس
 
@@ -43,7 +43,7 @@ npx wrangler dev
 اگر HTML و Worker روی یک origin نیستند، قبل از اسکریپت اصلی داشبورد مقدار زیر را تنظیم کن:
 
 ```html
-<script>window.STUDY_API_URL = "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev/api/data";</script>
+<script>window.STUDY_API_URL = "https://lesson-dashboard.YOUR-SUBDOMAIN.workers.dev/api/data";</script>
 ```
 
 سپس در `wrangler.toml` مقدار `ALLOWED_ORIGINS` را دقیقاً روی origin فرانت‌اند بگذار (بدون مسیر `/api/data`) و deploy کن:

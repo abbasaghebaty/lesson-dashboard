@@ -22,7 +22,7 @@ export default {
     try {
       if (url.pathname === "/api/health" && request.method === "GET") {
         const r = await env.DB.prepare("SELECT 1 AS ok").first();
-        return json({ok:r?.ok===1,service:"study-api",time:new Date().toISOString()},200,origin);
+        return json({ok:r?.ok===1,service:"lesson-dashboard",time:new Date().toISOString()},200,origin);
       }
       if (url.pathname === "/api/data" && request.method === "GET") return json(await getDashboardData(env.DB),200,origin);
       if (/^\/api\/(plan|homework|exams)(\/\d+)?$/.test(url.pathname)) {
