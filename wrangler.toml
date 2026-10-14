@@ -1,0 +1,13 @@
+name = "study-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "study-planner"
+database_id = "e0b69f5d-1833-44a1-972a-049ecf5e9038"
+
+# Set this to the exact deployed frontend origin(s), comma-separated.
+# Example: ALLOWED_ORIGINS = "https://your-site.pages.dev,https://your-domain.example"
+[vars]
+ALLOWED_ORIGINS = ""
