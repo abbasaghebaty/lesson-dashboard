@@ -10,4 +10,4 @@ database_id = "e0b69f5d-1833-44a1-972a-049ecf5e9038"
 # Set this to the exact deployed frontend origin(s), comma-separated.
 # Example: ALLOWED_ORIGINS = "https://your-site.pages.dev,https://your-domain.example"
 [vars]
-ALLOWED_ORIGINS = ""
+ALLOWED_ORIGINS = "https://abbasaghebaty.github.io/lesson-dashboard/"
