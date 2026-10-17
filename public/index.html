@@ -47,7 +47,7 @@ h2{margin:0 0 12px;font-size:17px;font-weight:800}
 table{border-collapse:collapse;width:100%;font-size:13px;min-width:420px}
 th,td{border:1px solid var(--bd);padding:6px 8px;text-align:center}
 th{background:color-mix(in srgb,var(--ac) 10%,transparent)}
-td.em{color:var(--mut)}
+td.em,span.em{color:var(--mut)}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--mut);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:4px;background:var(--k)}
 svg text{fill:var(--tx);font-family:inherit}
@@ -227,7 +227,7 @@ const MODULES=[
  return `<div class="sub" style="margin-bottom:4px">هر نقطه یک گزارش است: معلم در آن تاریخ تا کدام صفحه رسیده بود.</div><svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="نمودار صفحهٔ تدریس‌شده بر حسب تاریخ">${g}</svg><div class="legend">${S.map(s=>`<span style="--k:${s.c}"><i></i>${s.n}${s.pts.length===1?' (فقط یک گزارش)':''}</span>`).join('')}</div>`}},
 {id:"sched",title:"برنامهٔ کلاسی هفته",wide:1,render(){
  const fix=c=>String(c||'').replace(/—|–|-{2,}/g,'خالی').trim();
- return `<div class="tblw"><table><tr><th></th><th>زنگ ۱</th><th>زنگ ۲</th><th>زنگ ۳</th><th>زنگ ۴</th></tr>${DATA.schedule.map(r=>`<tr><th>${r[0]}</th>${r[1].map(c=>{const t=fix(c);return `<td class="${t&&t!=='خالی'?'':'em'}">${t||'خالی'}</td>`}).join('')}</tr>`).join('')}</table></div>`}}
+ return `<div class="tblw"><table><tr><th></th><th>زنگ ۱</th><th>زنگ ۲</th><th>زنگ ۳</th><th>زنگ ۴</th></tr>${DATA.schedule.map(r=>`<tr><th>${r[0]}</th>${r[1].map(c=>{const t=fix(c)||'خالی';return `<td class="${t==='خالی'?'em':''}">${t.split(' / ').map(x=>x==='خالی'?'<span class="em">خالی</span>':x).join(' / ')}</td>`}).join('')}</tr>`).join('')}</table></div>`}}
 ];
 
 /* ===== render ===== */
@@ -251,12 +251,12 @@ async function refreshData({initial=false}={}) {
     DATA=next; STAMP=iso(new Date()); lastLiveDataAt=new Date(); start();
     st.textContent='اتصال زنده به دیتابیس · آخرین دریافت: '+lastLiveDataAt.toLocaleTimeString('fa-IR');
     st.title='به‌روزرسانی خودکار هر ۳۰ ثانیه';
-    foot('داده‌ها به‌صورت زنده از دیتابیس خوانده می‌شوند.');
+    foot('داده‌ها به‌صورت زنده از دیتابیس خوانده می‌شوند. · نسخهٔ ۲');
   } catch(e) {
     if(initial) start();
     st.textContent='اتصال دیتابیس برقرار نیست؛ '+(lastLiveDataAt?'آخرین داده زنده: '+lastLiveDataAt.toLocaleTimeString('fa-IR'):'نمایش داده‌های ذخیره‌شده');
     st.title='خطا در دریافت داده: '+String(e.message||e);
-    foot('اتصال به دیتابیس برقرار نیست؛ آنچه می‌بینی ممکن است قدیمی باشد. صفحه خودش دوباره تلاش می‌کند.');
+    foot('اتصال به دیتابیس برقرار نیست؛ آنچه می‌بینی ممکن است قدیمی باشد. صفحه خودش دوباره تلاش می‌کند. · نسخهٔ ۲');
   }
 }
 refreshData({initial:true});
