@@ -1,5 +1,5 @@
 import { error, json } from "./lib/http.js";
-import { getDashboardData } from "./routes/data.js";
+import { getDashboardData } from "./routes/data.js"; 
 import { handleMutation } from "./routes/mutations.js";
 
 function allowedOrigin(request, env) {
