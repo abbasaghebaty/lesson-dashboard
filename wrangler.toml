@@ -2,7 +2,7 @@ name = "lesson-dashboard"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 
-# Serve the dashboard at the Worker root; API requests still go through src/index.js.
+# Serve the dashboard at the Worker root; API requests still go through src/index.js. 
 [assets]
 directory = "./public"
 binding = "ASSETS"
