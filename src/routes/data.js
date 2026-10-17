@@ -29,10 +29,10 @@ export async function getDashboardData(db) {
     days.get(r.day_index).cells[r.period - 1].push({ part: r.part, lab });
   }
   const schedule = [...days.entries()].sort((a,b)=>a[0]-b[0]).map(([,d])=>[
-    d.name, d.cells.map(c => c.length <= 1 ? (c[0]?.lab ?? "") : c.map(x=>x.lab || "—").join(" / ")),
+    d.name, d.cells.map(c => c.length <= 1 ? (c[0]?.lab ?? "") : c.map(x=>x.lab || "خالی").join(" / ")),
   ]);
   const bySub = new Map();
-  for (const r of prog) { if (!bySub.has(r.subject)) bySub.set(r.subject, []); bySub.get(r.subject).push([r.d.slice(5), r.pg]); }
+  for (const r of prog) { if (!bySub.has(r.subject)) bySub.set(r.subject, []); bySub.get(r.subject).push([r.d, r.pg]); }
   const pace = [...bySub.entries()].map(([s,pts],i)=>[s,pts,COLORS[i%COLORS.length]]);
   return {
     plan: plan.map(r=>[r.id,r.plan_date,r.due_date,r.subject,r.priority,r.kind,r.description,r.pf,r.pt,r.part,r.parts,r.status]),

@@ -30,8 +30,6 @@ h2{margin:0 0 12px;font-size:17px;font-weight:800}
 .item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--bd)}
 .item:first-of-type{border-top:0}
 .dot{flex:none;width:6px;align-self:stretch;border-radius:4px;background:var(--k)}
-.item.done{opacity:.5}
-.item.done .t{text-decoration:line-through}
 .t{font-size:14px}
 .meta{color:var(--mut);font-size:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .tag{background:color-mix(in srgb,var(--k) 16%,transparent);color:var(--k);border-radius:8px;padding:0 8px;font-size:11px;font-weight:600}
@@ -54,6 +52,16 @@ td.em{color:var(--mut)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:4px;background:var(--k)}
 svg text{fill:var(--tx);font-family:inherit}
 .empty{color:var(--mut);font-size:13px}
+.prow{display:grid;grid-template-columns:120px 1fr 130px;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--bd)}
+.prow:first-of-type{border-top:0}
+.pn{font-size:13px;font-weight:600}
+.pbar{height:12px;border-radius:6px;background:var(--bd);overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:6px;background:var(--ac)}
+.pv{font-size:12px;color:var(--mut);display:flex;gap:8px;align-items:center;justify-content:space-between}
+.pv b{color:var(--tx)}
+.late{background:color-mix(in srgb,var(--exam) 14%,transparent);color:var(--exam);border-radius:8px;padding:0 8px;font-size:11px;font-weight:600}
+svg.chart{direction:ltr;display:block;max-width:560px;margin:0 auto}
+@media(max-width:480px){.prow{grid-template-columns:1fr auto}.pbar{grid-column:1/-1;order:3}}
 footer{padding:8px 16px 28px;color:var(--mut);font-size:12px;text-align:center}
 @media(min-width:900px){body{font-size:16px}main{padding:20px 28px}header{padding:24px 28px 8px}nav{padding:8px 28px}.stats{padding:0 28px}}
 </style>
@@ -63,7 +71,7 @@ footer{padding:8px 16px 28px;color:var(--mut);font-size:12px;text-align:center}
 <div class="stats" id="stats"></div>
 <nav id="nav"></nav>
 <main id="main"></main>
-<footer>فقط نمایشی؛ برای ثبت انجام‌شدن کارها به دکتر سمی بگو.</footer>
+<footer id="foot"></footer>
 
 <script>
 /* ===== DATA: snapshot of D1 tables (replace/add keys to extend) ===== */
@@ -115,7 +123,7 @@ homework:[
 ],
 schedule:[
 ["شنبه",["مدیریت خانواده","زیست","دین و زندگی","ورزش"]],
-["یکشنبه",["شیمی","فیزیک","فیزیک / —",""]],
+["یکشنبه",["شیمی","فیزیک","فیزیک / خالی",""]],
 ["دوشنبه",["نگارش","ریاضی","فارسی","عربی"]],
 ["سه‌شنبه",["زیست","شیمی","سلامت و بهداشت",""]],
 ["چهارشنبه",["زبان","ریاضی","زبان","هویت اجتماعی"]]
@@ -125,10 +133,10 @@ books:[ /* subject, priority, lessons, taught, reviewed */
 ["هویت اجتماعی",3,10,1,1],["دین و زندگی",3,10,1,0],["سلامت و بهداشت",3,14,0,0],["مدیریت خانواده",4,22,1,0],["نگارش",4,12,0,0]
 ],
 pace:[ /* subject, [date,page] ... cumulative page the teacher reached */
-["زیست",[["10-11",16],["10-13",20]],"#12b886"],
-["شیمی",[["10-11",22],["10-13",25]],"#3b82f6"],
-["فیزیک",[["10-13",17]],"#f5a623"],
-["زبان انگلیسی",[["10-07",25]],"#e5484d"]
+["زیست",[["2026-10-11",16],["2026-10-13",20]],"#12b886"],
+["شیمی",[["2026-10-11",22],["2026-10-13",25]],"#3b82f6"],
+["فیزیک",[["2026-10-13",17]],"#f5a623"],
+["زبان انگلیسی",[["2026-10-07",25]],"#e5484d"]
 ]};
 let DATA=SNAP;
 const KIND={exam:["امتحان","var(--exam)"],homework:["تکلیف","var(--homework)"],review:["مرور","var(--review)"],preview:["پیش‌مطالعه","var(--preview)"]};
@@ -136,65 +144,102 @@ const KIND={exam:["امتحان","var(--exam)"],homework:["تکلیف","var(--ho
 /* ===== helpers ===== */
 const fa=n=>Number(n).toLocaleString('fa-IR',{useGrouping:false});
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-const TODAY=iso(new Date());
+let TODAY=iso(new Date());
 const dt=s=>new Date(s+'T12:00:00');
+const addDays=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)};
 const jd=(s,o)=>new Intl.DateTimeFormat('fa-IR-u-ca-persian',o||{weekday:'long',day:'numeric',month:'long'}).format(dt(s));
 const diff=s=>Math.round((dt(s)-dt(TODAY))/864e5);
-const score=r=>{const[,,due,,pr,k]=r;const w={exam:8,homework:5,review:3,preview:2}[k];return Math.round(w*(5-pr)*(4/(Math.max(0,diff(due))+1))*10)/10};
-let P;const mkP=()=>{P=DATA.plan.map(r=>({id:r[0],pd:r[1],due:r[2],s:r[3],pr:r[4],k:r[5],t:r[6],pf:r[7],pt:r[8],st:r[11],sc:score(r)}))};
-const pages=r=>r.pf?` · ص ${fa(r.pf)}–${fa(r.pt)}`:'';
-const row=(r,showDue)=>`<div class="item ${r.st}" style="--k:${KIND[r.k][1]}"><div class="dot"></div><div><div class="t">${r.s}: ${r.t}</div><div class="meta"><span class="tag">${KIND[r.k][0]}</span><span>${pages(r).slice(3)||''}</span>${showDue?`<span>مهلت ${jd(r.due,{day:'numeric',month:'long'})}</span>`:''}</div></div><div class="sc">${r.st==='done'?'انجام شد':fa(r.sc)}</div></div>`;
-const sortR=a=>a.slice().sort((x,y)=>(x.st==='done')-(y.st==='done')||y.sc-x.sc);
+/* قانون مهلت: هر کاری که «تاریخ ارائه» دارد (امتحان، تحویل تکلیف، ...) آخرین روز کار روی آن «یک روز قبل» است. */
+const dl=s=>addDays(s,-1);
+const NORM=d=>String(d).length<=5?TODAY.slice(0,4)+'-'+d:d;
+const score=r=>{const w={exam:8,homework:5,review:3,preview:2}[r.k];const left=Math.max(0,diff(dl(r.due)));return Math.round(w*(5-r.pr)*(4/(left+1))*10)/10};
+let P;const mkP=()=>{TODAY=iso(new Date());P=DATA.plan.map(r=>{const o={id:r[0],pd:r[1],due:r[2],s:r[3],pr:r[4],k:r[5],t:r[6],pf:r[7],pt:r[8],st:r[11]};o.sc=score(o);return o})};
+/* فقط کارهای انجام‌نشده؛ فقط ۷ روز پیش‌رو (امروز تا ۶ روز بعد)؛ کارهای عقب‌ماندهٔ روزهای قبل فقط اگر مهلتشان هنوز نگذشته باشد */
+const winEnd=()=>addDays(TODAY,6);
+const inWindow=r=>r.st==='todo'&&r.pd>=TODAY&&r.pd<=winEnd();
+const carry=r=>r.st==='todo'&&r.pd<TODAY&&dl(r.due)>=TODAY;
+const openHw=()=>DATA.homework.filter(h=>h.st==='todo'&&(!h.d||diff(dl(h.d))>=0));
+const pages=r=>r.pf?`ص ${fa(r.pf)}–${fa(r.pt)}`:'';
+const row=(r,showDue)=>`<div class="item" style="--k:${KIND[r.k][1]}"><div class="dot"></div><div><div class="t">${r.s}: ${r.t}</div><div class="meta"><span class="tag">${KIND[r.k][0]}</span>${r.pd<TODAY?'<span class="late">عقب‌مانده</span>':''}<span>${pages(r)}</span>${showDue?`<span>مهلت ${diff(dl(r.due))===0?'امروز':jd(dl(r.due),{weekday:'long',day:'numeric',month:'long'})}</span>`:''}</div></div><div class="sc">${fa(r.sc)}</div></div>`;
+const sortR=a=>a.slice().sort((x,y)=>y.sc-x.sc);
+const GRID='var(--bd)',AXIS='var(--mut)';
 
 /* ===== modules: add an object here to add a section ===== */
 const MODULES=[
 {id:"today",title:"برنامهٔ امروز",render(){
- let d=TODAY,rows=P.filter(r=>r.pd===d||(r.pd<TODAY&&r.st==='todo'));
- if(!rows.length){const nx=P.map(r=>r.pd).filter(x=>x>TODAY).sort()[0];if(nx){d=nx;rows=P.filter(r=>r.pd===d)}}
- const head=d===TODAY?'':`<div class="empty">برای امروز چیزی ثبت نشده؛ نزدیک‌ترین روز: ${jd(d)}</div>`;
- return head+(rows.length?sortR(rows).map(r=>row(r,true)).join(''):'<div class="empty">برنامه‌ای ثبت نشده است.</div>')}},
+ let d=TODAY,rows=P.filter(r=>(r.pd===TODAY&&r.st==='todo')||carry(r));
+ if(!rows.length){
+  const nx=P.filter(inWindow).map(r=>r.pd).sort()[0];
+  const hadToday=P.some(r=>r.pd===TODAY);
+  if(nx){d=nx;rows=P.filter(r=>r.st==='todo'&&r.pd===nx)}
+  const msg=hadToday?'کارهای امروز تمام شده؛ ':'برای امروز چیزی ثبت نشده؛ ';
+  return (nx?`<div class="empty">${msg}نزدیک‌ترین روز: ${jd(d)}</div>`:`<div class="empty">${msg}</div>`)+sortR(rows).map(r=>row(r,true)).join('')}
+ return sortR(rows).map(r=>row(r,true)).join('')}},
 {id:"exams",title:"امتحان‌ها",render(){
- return DATA.exams.filter(e=>e.st==='upcoming').sort((a,b)=>a.d<b.d?-1:1).map(e=>{const n=diff(e.d);
- return `<div class="exam"><div class="cd">${n<=0?(n===0?'امروز':'گذشته'):fa(n)}${n>0?'<small>روز مانده</small>':''}</div><div><b>${e.s}</b><div class="meta">${jd(e.d)}</div><div class="t">${e.c}</div></div></div>`}).join('')||'<div class="empty">امتحانی ثبت نشده.</div>'}},
+ /* امتحانِ امروز یا گذشته دیگر نشان داده نمی‌شود: وقتی از مدرسه برمی‌گردی امتحان داده‌ای. */
+ return DATA.exams.filter(e=>e.st==='upcoming'&&diff(e.d)>=1).sort((a,b)=>a.d<b.d?-1:1).map(e=>{const n=diff(e.d);
+ const last=n===1?'امروز آخرین روز مطالعه است':'آخرین روز مطالعه: '+jd(dl(e.d),{weekday:'long',day:'numeric',month:'long'});
+ return `<div class="exam"><div class="cd">${n===1?'فردا':fa(n)+'<small>روز مانده</small>'}</div><div><b>${e.s}</b><div class="meta">امتحان: ${jd(e.d)} · ${last}</div><div class="t">${e.c}</div></div></div>`}).join('')||'<div class="empty">امتحان پیش‌رویی ثبت نشده.</div>'}},
 {id:"hw",title:"تکالیف",render(){
- return DATA.homework.slice().sort((a,b)=>(a.st==='done')-(b.st==='done')||(a.d||'9')<(b.d||'9')?-1:1).map(h=>`<div class="item ${h.st}" style="--k:var(--homework)"><div class="dot"></div><div><div class="t">${h.s}: ${h.t}</div><div class="meta">${h.d?'مهلت '+jd(h.d,{day:'numeric',month:'long'}):'بدون مهلت'}${h.st==='todo'&&h.d?` · ${diff(h.d)<=0?'امروز':fa(diff(h.d))+' روز مانده'}`:''}</div></div><div class="sc">${h.st==='done'?'انجام شد':''}</div></div>`).join('')}},
-{id:"week",title:"برنامهٔ هفتگی (اولویت‌بندی‌شده)",wide:1,render(){
- const days=[...new Set(P.map(r=>r.pd))].sort();
- return `<div class="days">${days.map(d=>`<div class="day ${d===TODAY?'today':''}"><h3>${jd(d)}</h3>${sortR(P.filter(r=>r.pd===d)).map(r=>row(r,false)).join('')}</div>`).join('')}</div><div class="legend">${Object.values(KIND).map(k=>`<span style="--k:${k[1]}"><i></i>${k[0]}</span>`).join('')}<span>عدد کنار هر کار = امتیاز اولویت</span></div>`}},
-{id:"load",title:"حجم کار روزانه",render(){
- const days=[...new Set(P.map(r=>r.pd))].sort(),W=360,H=190,bw=W/days.length;
- const mx=Math.max(...days.map(d=>P.filter(r=>r.pd===d).length));
- let g='';days.forEach((d,i)=>{let y=H-26;['exam','homework','review','preview'].forEach(k=>{const n=P.filter(r=>r.pd===d&&r.k===k).length;if(!n)return;const h=n/mx*(H-50);y-=h;g+=`<rect x="${i*bw+bw*.18}" y="${y}" width="${bw*.64}" height="${h-1.5}" rx="4" style="fill:${KIND[k][1]}"/>`});
- g+=`<text x="${i*bw+bw/2}" y="${H-8}" font-size="11" text-anchor="middle">${fa(Number(d.slice(8)))}</text>`});
- return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}</svg><div class="legend">${Object.values(KIND).map(k=>`<span style="--k:${k[1]}"><i></i>${k[0]}</span>`).join('')}</div>`}},
+ const H=openHw().sort((a,b)=>(a.d||'9999')<(b.d||'9999')?-1:1);
+ return H.map(h=>{const k=h.d?diff(dl(h.d)):null;
+ return `<div class="item" style="--k:var(--homework)"><div class="dot"></div><div><div class="t">${h.s}: ${h.t}</div><div class="meta">${h.d?'مهلت '+(k===0?'امروز':jd(dl(h.d),{weekday:'long',day:'numeric',month:'long'}))+(k>0?` · ${fa(k)} روز مانده`:''):'بدون مهلت'}</div></div></div>`}).join('')||'<div class="empty">تکلیف بازی نداری.</div>'}},
+{id:"week",title:"برنامهٔ ۷ روز آینده (اولویت‌بندی‌شده)",wide:1,render(){
+ const days=Array.from({length:7},(_,i)=>addDays(TODAY,i));
+ return `<div class="days">${days.map(d=>{const rs=sortR(P.filter(r=>r.st==='todo'&&r.pd===d));return `<div class="day ${d===TODAY?'today':''}"><h3>${jd(d)}</h3>${rs.length?rs.map(r=>row(r,false)).join(''):'<div class="empty">برنامه‌ای نیست</div>'}</div>`}).join('')}</div><div class="legend">${Object.values(KIND).map(k=>`<span style="--k:${k[1]}"><i></i>${k[0]}</span>`).join('')}<span>عدد کنار هر کار = امتیاز اولویت</span></div>`}},
+{id:"load",title:"حجم کار ۷ روز آینده",render(){
+ const days=Array.from({length:7},(_,i)=>addDays(TODAY,i)),kinds=['exam','homework','review','preview'];
+ const cnt=d=>kinds.map(k=>P.filter(r=>r.st==='todo'&&r.pd===d&&r.k===k).length);
+ const tot=days.map(d=>cnt(d).reduce((a,b)=>a+b,0));
+ const W=420,H=256,L=34,R=10,T=40,Bm=52,pw=W-L-R,ph=H-T-Bm,bw=pw/7;
+ const rawMax=Math.max(1,...tot),step=rawMax<=6?1:Math.ceil(rawMax/6),mx=Math.ceil(rawMax/step)*step,Y=v=>T+ph-v/mx*ph;
+ let g=`<text x="2" y="14" font-size="11" text-anchor="start" style="fill:var(--mut)">تعداد کار</text>`;
+ for(let v=0;v<=mx;v+=step){const y=Y(v);g+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="${GRID}" stroke-width="1"/><text x="${L-6}" y="${y+4}" font-size="10" text-anchor="end" style="fill:var(--mut)">${fa(v)}</text>`}
+ days.forEach((d,i)=>{const c=cnt(d),x=L+i*bw+bw*.2;let acc=0;
+  g+=`<line x1="${L+i*bw}" y1="${T}" x2="${L+i*bw}" y2="${T+ph}" stroke="${GRID}" stroke-width="1" stroke-dasharray="2 3"/>`;
+  kinds.forEach((k,j)=>{if(!c[j])return;const y1=Y(acc+c[j]),y0=Y(acc);g+=`<rect x="${x}" y="${y1}" width="${bw*.6}" height="${Math.max(1,y0-y1-1.5)}" rx="3" style="fill:${KIND[k][1]}"/>`;acc+=c[j]});
+  if(tot[i])g+=`<text x="${x+bw*.3}" y="${Y(tot[i])-5}" font-size="11" font-weight="700" text-anchor="middle">${fa(tot[i])}</text>`;
+  const cx=L+i*bw+bw/2,td=d===TODAY;
+  g+=`<text x="${cx}" y="${T+ph+16}" font-size="10" text-anchor="middle" ${td?'font-weight="800" style="fill:var(--ac)"':'style="fill:var(--mut)"'}>${td?'امروز':jd(d,{weekday:'long'})}</text><text x="${cx}" y="${T+ph+30}" font-size="10" text-anchor="middle" style="fill:var(--mut)">${jd(d,{day:'numeric',month:'short'})}</text>`});
+ g+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="${AXIS}" stroke-width="1.5"/><line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="${AXIS}" stroke-width="1.5"/>`;
+ return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="تعداد کارهای انجام‌نشده در هر یک از هفت روز آینده">${g}</svg><div class="legend">${Object.values(KIND).map(k=>`<span style="--k:${k[1]}"><i></i>${k[0]}</span>`).join('')}</div>`}},
 {id:"prog",title:"پیشرفت تدریس هر درس",render(){
- const B=DATA.books.filter(b=>b[2]>0);let g='';const rh=38,W=540,barX=165,barW=250;
- B.forEach((b,i)=>{const y=i*rh,p=Math.max(0,Math.min(1,b[3]/b[2])),pct=Math.round(p*100),fill=barW*p;
- g+=`<text x="${W-5}" y="${y+23}" font-size="12" font-weight="600" text-anchor="end">${b[0]}</text><rect x="${barX}" y="${y+12}" width="${barW}" height="12" rx="6" style="fill:var(--bd)"/><rect x="${barX+barW-fill}" y="${y+12}" width="${fill}" height="12" rx="6" style="fill:var(--ac)"/><text x="150" y="${y+23}" font-size="11" text-anchor="end" style="fill:var(--mut)">${fa(b[3])} از ${fa(b[2])} درس · ${fa(pct)}٪</text>`});
- return `<div class="sub" style="margin-bottom:8px">تعداد درس‌هایی که تدریس شده، از کل درس‌های ثبت‌شدهٔ هر کتاب؛ درصد کنار نوار آمده است.</div><svg viewBox="0 0 ${W} ${B.length*rh}" width="100%" role="img" aria-label="تعداد درس‌های تدریس‌شده از کل درس‌ها به تفکیک درس">${g}</svg><div class="legend"><span>بنفش = درس‌های تدریس‌شده</span><span>پس‌زمینهٔ خاکستری = درس‌های باقی‌مانده</span></div>`}},
-{id:"pace",title:"روند پیشروی تدریس معلم‌ها در طول زمان",render(){
- const W=440,H=240,L=48,R=14,T=24,B=42,all=DATA.pace.flatMap(p=>p[1]);
- const rawMax=Math.max(5,...all.map(a=>a[1])),mx=Math.ceil(rawMax/5)*5;
- const ds=[...new Set(all.map(a=>a[0]))].sort(),plotW=W-L-R,plotH=H-T-B;
- const X=d=>L+(ds.indexOf(d))*((plotW)/Math.max(1,ds.length-1)),Y=v=>T+plotH-(v/mx)*plotH;
- let g='';
- for(let i=0;i<=4;i++){const v=mx*i/4,y=Y(v);g+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="var(--bd)" stroke-width="1"/><text x="${L-8}" y="${y+4}" font-size="10" text-anchor="end" style="fill:var(--mut)">${fa(Math.round(v))}</text>`}
- ds.forEach(d=>{const x=X(d);g+=`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+plotH}" stroke="var(--bd)" stroke-width="1"/><text x="${x}" y="${H-18}" font-size="10" text-anchor="middle" style="fill:var(--mut)">${fa(d.replace('-','/'))}</text>`});
- DATA.pace.forEach(p=>{const pts=p[1].map(a=>[X(a[0]),Y(a[1])]);g+=`<polyline fill="none" stroke="${p[2]}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(q=>q.join(',')).join(' ')}"/>`+pts.map((q,i)=>`<circle cx="${q[0]}" cy="${q[1]}" r="4" fill="${p[2]}" stroke="var(--card)" stroke-width="1.5"/><text x="${q[0]}" y="${q[1]-8}" font-size="10" text-anchor="middle" style="fill:${p[2]}">${fa(p[1][i][1])}</text>`).join('')});
- return `<div class="sub" style="margin-bottom:4px">محور افقی: تاریخ · محور عمودی: شمارهٔ صفحه‌ای که معلم به آن رسیده است. هر نقطه یک گزارش ثبت‌شده است.</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="نمودار تغییر صفحهٔ تدریس‌شده بر حسب تاریخ با خطوط راهنمای افقی و عمودی">${g}</svg><div class="legend">${DATA.pace.map(p=>`<span style="--k:${p[2]}"><i></i>${p[0]}</span>`).join('')}</div><div class="sub">برای دیدن روند، تاریخ‌های ثبت‌شدهٔ هر درس را با هم مقایسه کن؛ اگر فقط یک نقطه ثبت شده باشد، هنوز روند خطی برای آن درس شکل نمی‌گیرد.</div>`}},
+ const B=DATA.books.filter(b=>b[2]>0);
+ const rows=B.map(b=>{const pct=Math.round(Math.max(0,Math.min(1,b[3]/b[2]))*100);
+  return `<div class="prow"><div class="pn">${b[0]}</div><div class="pbar" role="img" aria-label="${b[0]}: ${fa(b[3])} از ${fa(b[2])} درس"><i style="width:${pct}%"></i></div><div class="pv">${b[3]?`<span>${fa(b[3])} از ${fa(b[2])} درس</span><b>${fa(pct)}٪</b>`:`<span>هنوز شروع نشده (${fa(b[2])} درس)</span>`}</div></div>`}).join('');
+ return `<div class="sub" style="margin-bottom:8px">هر نوار نشان می‌دهد از کل درس‌های آن کتاب چند درس تدریس شده است.</div>${rows||'<div class="empty">اطلاعاتی نیست.</div>'}`}},
+{id:"pace",title:"روند پیشروی تدریس معلم‌ها",render(){
+ const S=DATA.pace.map(p=>({n:p[0],c:p[2],pts:p[1].map(a=>({d:NORM(a[0]),v:a[1]})).sort((a,b)=>a.d<b.d?-1:1)})).filter(s=>s.pts.length);
+ if(!S.length)return '<div class="empty">گزارشی ثبت نشده.</div>';
+ const W=440,H=280,L=44,R=14,T=44,Bm=56,pw=W-L-R,ph=H-T-Bm;
+ const allD=[...new Set(S.flatMap(s=>s.pts.map(p=>p.d)))].sort();
+ const off=d=>Math.round((dt(d)-dt(allD[0]))/864e5),span=Math.max(1,off(allD[allD.length-1]));
+ const X=d=>allD.length===1?L+pw/2:L+16+off(d)/span*(pw-32);
+ const rawMax=Math.max(5,...S.flatMap(s=>s.pts.map(p=>p.v)));let step=5;while(rawMax/step>6)step*=2;const mx=Math.ceil(rawMax/step)*step,Y=v=>T+ph-v/mx*ph;
+ let g=`<text x="2" y="12" font-size="11" text-anchor="start" style="fill:var(--mut)">شمارهٔ صفحه</text>`;
+ for(let v=0;v<=mx;v+=step){const y=Y(v);g+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="${GRID}" stroke-width="1"/><text x="${L-6}" y="${y+4}" font-size="10" text-anchor="end" style="fill:var(--mut)">${fa(v)}</text>`}
+ const every=allD.length>7?2:1;
+ allD.forEach((d,i)=>{const x=X(d);g+=`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+ph}" stroke="${GRID}" stroke-width="1" stroke-dasharray="2 3"/><line x1="${x}" y1="${T+ph}" x2="${x}" y2="${T+ph+4}" stroke="${AXIS}" stroke-width="1.5"/>`+(i%every===0?`<text x="${x}" y="${T+ph+18}" font-size="10" text-anchor="middle" style="fill:var(--mut)">${jd(d,{day:'numeric',month:'short'})}</text>`:'')});
+ g+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="${AXIS}" stroke-width="1.5"/><line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="${AXIS}" stroke-width="1.5"/><text x="${L+pw/2}" y="${H-6}" font-size="11" text-anchor="middle" style="fill:var(--mut)">تاریخ گزارش</text>`;
+ S.forEach(s=>{const q=s.pts.map(p=>[X(p.d),Y(p.v),p.v]);
+  if(q.length>1)g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${q.map(a=>a[0]+','+a[1]).join(' ')}"/>`;
+  g+=q.map(a=>`<circle cx="${a[0]}" cy="${a[1]}" r="4.5" fill="${s.c}" stroke="var(--card)" stroke-width="1.5"/><text x="${a[0]}" y="${a[1]-9}" font-size="10" font-weight="700" text-anchor="middle" style="fill:${s.c}">${fa(a[2])}</text>`).join('')});
+ return `<div class="sub" style="margin-bottom:4px">هر نقطه یک گزارش است: معلم در آن تاریخ تا کدام صفحه رسیده بود.</div><svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="نمودار صفحهٔ تدریس‌شده بر حسب تاریخ">${g}</svg><div class="legend">${S.map(s=>`<span style="--k:${s.c}"><i></i>${s.n}${s.pts.length===1?' (فقط یک گزارش)':''}</span>`).join('')}</div>`}},
 {id:"sched",title:"برنامهٔ کلاسی هفته",wide:1,render(){
- return `<div class="tblw"><table><tr><th></th><th>زنگ ۱</th><th>زنگ ۲</th><th>زنگ ۳</th><th>زنگ ۴</th></tr>${DATA.schedule.map(r=>`<tr><th>${r[0]}</th>${r[1].map(c=>`<td class="${c?'':'em'}">${c||'خالی'}</td>`).join('')}</tr>`).join('')}</table></div>`}}
+ const fix=c=>String(c||'').replace(/—|–|-{2,}/g,'خالی').trim();
+ return `<div class="tblw"><table><tr><th></th><th>زنگ ۱</th><th>زنگ ۲</th><th>زنگ ۳</th><th>زنگ ۴</th></tr>${DATA.schedule.map(r=>`<tr><th>${r[0]}</th>${r[1].map(c=>{const t=fix(c);return `<td class="${t&&t!=='خالی'?'':'em'}">${t||'خالی'}</td>`}).join('')}</tr>`).join('')}</table></div>`}}
 ];
 
 /* ===== render ===== */
+const foot=m=>{document.getElementById('foot').textContent=m};
 function start(){mkP();const main=document.getElementById('main'),nav=document.getElementById('nav');main.replaceChildren();nav.replaceChildren();
 MODULES.forEach(m=>{const s=document.createElement('section');s.id=m.id;if(m.wide)s.className='wide';s.innerHTML=`<h2>${m.title}</h2>${m.render()}`;main.appendChild(s);
  nav.insertAdjacentHTML('beforeend',`<a href="#${m.id}">${m.title.split(' (')[0]}</a>`)});
 document.getElementById('today').textContent=jd(TODAY,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 document.getElementById('stamp').textContent='آخرین به‌روزرسانی داده: '+jd(STAMP,{day:'numeric',month:'long'});
-const todo=P.filter(r=>r.st==='todo'),nx=DATA.exams.filter(e=>e.st==='upcoming'&&diff(e.d)>=0).sort((a,b)=>a.d<b.d?-1:1)[0];
-const hwOpen=DATA.homework.filter(h=>h.st==='todo').length,tdy=P.filter(r=>r.pd===TODAY),tdn=tdy.filter(r=>r.st==='done').length;
-document.getElementById('stats').innerHTML=[[nx?(diff(nx.d)===0?'امروز':fa(diff(nx.d))+' روز'):'—',nx?'تا امتحان '+nx.s:'امتحانی نیست'],[fa(hwOpen),'تکلیف باز'],[fa(todo.length),'کار باقی‌مانده در برنامه'],[tdy.length?fa(tdn)+'/'+fa(tdy.length):'—','انجام‌شده‌های امروز']].map(a=>`<div class="stat"><b>${a[0]}</b><span>${a[1]}</span></div>`).join('');
+const vis=P.filter(r=>inWindow(r)||carry(r)),nx=DATA.exams.filter(e=>e.st==='upcoming'&&diff(e.d)>=1).sort((a,b)=>a.d<b.d?-1:1)[0];
+const tdy=P.filter(r=>r.pd===TODAY),tdn=tdy.filter(r=>r.st==='done').length;
+document.getElementById('stats').innerHTML=[[nx?(diff(nx.d)===1?'فردا':fa(diff(nx.d))+' روز'):'—',nx?'تا امتحان '+nx.s:'امتحانی نیست'],[fa(openHw().length),'تکلیف باز'],[fa(vis.length),'کار باقی‌مانده (۷ روز آینده)'],[tdy.length?fa(tdn)+'/'+fa(tdy.length):'—','انجام‌شده‌های امروز']].map(a=>`<div class="stat"><b>${a[0]}</b><span>${a[1]}</span></div>`).join('');
 }
 async function refreshData({initial=false}={}) {
   const st=document.getElementById('stamp');
@@ -203,13 +248,15 @@ async function refreshData({initial=false}={}) {
     if(!r.ok) throw new Error(`API ${r.status}`);
     const next=await r.json();
     if(!next || !Array.isArray(next.plan) || !Array.isArray(next.exams) || !Array.isArray(next.homework)) throw new Error('پاسخ API ساختار مورد انتظار را ندارد');
-    DATA=next; STAMP=TODAY; lastLiveDataAt=new Date(); start();
+    DATA=next; STAMP=iso(new Date()); lastLiveDataAt=new Date(); start();
     st.textContent='اتصال زنده به دیتابیس · آخرین دریافت: '+lastLiveDataAt.toLocaleTimeString('fa-IR');
     st.title='به‌روزرسانی خودکار هر ۳۰ ثانیه';
+    foot('داده‌ها به‌صورت زنده از دیتابیس خوانده می‌شوند.');
   } catch(e) {
     if(initial) start();
-    st.textContent='اتصال دیتابیس برقرار نیست؛ '+(lastLiveDataAt?'آخرین داده زنده: '+lastLiveDataAt.toLocaleTimeString('fa-IR'):'نمایش داده‌های نمونه/ذخیره‌شده');
+    st.textContent='اتصال دیتابیس برقرار نیست؛ '+(lastLiveDataAt?'آخرین داده زنده: '+lastLiveDataAt.toLocaleTimeString('fa-IR'):'نمایش داده‌های ذخیره‌شده');
     st.title='خطا در دریافت داده: '+String(e.message||e);
+    foot('اتصال به دیتابیس برقرار نیست؛ آنچه می‌بینی ممکن است قدیمی باشد. صفحه خودش دوباره تلاش می‌کند.');
   }
 }
 refreshData({initial:true});
