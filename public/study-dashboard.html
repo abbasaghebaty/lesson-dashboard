@@ -224,7 +224,7 @@ const MODULES=[
  S.forEach(s=>{const q=s.pts.map(p=>[X(p.d),Y(p.v),p.v]);
   if(q.length>1)g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${q.map(a=>a[0]+','+a[1]).join(' ')}"/>`;
   g+=q.map(a=>`<circle cx="${a[0]}" cy="${a[1]}" r="4.5" fill="${s.c}" stroke="var(--card)" stroke-width="1.5"/><text x="${a[0]}" y="${a[1]-9}" font-size="10" font-weight="700" text-anchor="middle" style="fill:${s.c}">${fa(a[2])}</text>`).join('')});
- return `<div class="sub" style="margin-bottom:4px">هر نقطه یک گزارش است: معلم در آن تاریخ تا کدام صفحه رسیده بود.</div><svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="نمودار صفحهٔ تدریس‌شده بر حسب تاریخ">${g}</svg><div class="legend">${S.map(s=>`<span style="--k:${s.c}"><i></i>${s.n}${s.pts.length===1?' (فقط یک گزارش)':''}</span>`).join('')}</div>`}},
+ return `<div class="sub" style="margin-bottom:4px">هر نقطه یک گزارش است: معلم در آن تاریخ تا کدام صفحه رسیده بود.</div><svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="نمودار صفحهٔ تدریس‌شده بر حسب تاریخ">${g}</svg><div class="legend">${S.map(s=>`<span style="--k:${s.c}"><i></i>${s.n}${s.pts.length===1?'':''}</span>`).join('')}</div>`}},
 {id:"sched",title:"برنامهٔ کلاسی هفته",wide:1,render(){
  const fix=c=>String(c||'').replace(/—|–|-{2,}/g,'خالی').trim();
  return `<div class="tblw"><table><tr><th></th><th>زنگ ۱</th><th>زنگ ۲</th><th>زنگ ۳</th><th>زنگ ۴</th></tr>${DATA.schedule.map(r=>`<tr><th>${r[0]}</th>${r[1].map(c=>{const t=fix(c)||'خالی';return `<td class="${t==='خالی'?'em':''}">${t.split(' / ').map(x=>x==='خالی'?'<span class="em">خالی</span>':x).join(' / ')}</td>`}).join('')}</tr>`).join('')}</table></div>`}}
