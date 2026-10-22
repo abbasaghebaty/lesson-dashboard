@@ -1,5 +1,11 @@
 const COLORS = ["#12b886", "#3b82f6", "#f5a623", "#e5484d", "#8b5cf6", "#0ea5e9"];
 
+// FIXES in this version:
+//  1) "taught lessons" are now computed from progress_log too (a lesson counts as taught once the last
+//     reported page reached its start page), so the site no longer lags behind the Telegram bot.
+//  2) the pace chart no longer hides a correct record just because its note mentions the word "اشتباه";
+//     only records whose note STARTS with "گزارش اشتباه" (reports marked as wrong) are excluded.
+
 export async function getDashboardData(db) {
   const q = async (sql) => (await db.prepare(sql).all()).results;
   const [plan, exams, homework, sched, books, prog] = await Promise.all([
@@ -14,12 +20,13 @@ export async function getDashboardData(db) {
     q(`SELECT day_index, day_name, period, part, subject FROM weekly_schedule ORDER BY day_index, period`),
     q(`SELECT b.id, b.subject, b.priority,
               (SELECT COUNT(*) FROM toc t WHERE t.book_id=b.id AND t.kind='lesson') lessons,
-              (SELECT COUNT(*) FROM toc t WHERE t.book_id=b.id AND t.kind='lesson' AND t.taught=1) taught,
+              (SELECT COUNT(*) FROM toc t WHERE t.book_id=b.id AND t.kind='lesson'
+                 AND (t.taught=1 OR (t.start_page>0 AND t.start_page <= IFNULL((SELECT MAX(p.up_to_page) FROM progress_log p WHERE p.book_id=b.id),0)))) taught,
               (SELECT COUNT(*) FROM toc t WHERE t.book_id=b.id AND t.kind='lesson' AND t.reviewed>0) reviewed
        FROM books b ORDER BY b.priority, b.id`),
     q(`SELECT b.subject, p.report_date d, MAX(p.up_to_page) pg
        FROM progress_log p JOIN books b ON b.id = p.book_id
-       WHERE p.up_to_page IS NOT NULL AND IFNULL(p.notes,'') NOT LIKE '%اشتباه%'
+       WHERE p.up_to_page IS NOT NULL AND IFNULL(p.notes,'') NOT LIKE 'گزارش اشتباه%'
        GROUP BY b.subject, p.report_date ORDER BY b.subject, p.report_date`),
   ]);
   const days = new Map();
