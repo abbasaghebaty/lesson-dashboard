@@ -1,18 +1,16 @@
 const COLORS = ["#12b886", "#3b82f6", "#f5a623", "#e5484d", "#8b5cf6", "#0ea5e9"];
 
-// FIXES in this version:
-//  1) "taught lessons" are now computed from progress_log too (a lesson counts as taught once the last
-//     reported page reached its start page), so the site no longer lags behind the Telegram bot.
-//  2) the pace chart no longer hides a correct record just because its note mentions the word "اشتباه";
-//     only records whose note STARTS with "گزارش اشتباه" (reports marked as wrong) are excluded.
+// The 7-day planner is removed: the `plan` table is no longer read.
+// `plan` is still returned as an empty array so the existing frontend keeps working unchanged.
+//
+// Notes kept from earlier fixes:
+//  1) "taught lessons" are computed from progress_log too (a lesson counts as taught once the last
+//     reported page reached its start page), so the site never lags behind the Telegram bot.
+//  2) the pace chart only hides records whose note STARTS with "گزارش اشتباه" (reports marked as wrong).
 
 export async function getDashboardData(db) {
   const q = async (sql) => (await db.prepare(sql).all()).results;
-  const [plan, exams, homework, sched, books, prog] = await Promise.all([
-    q(`SELECT p.id, p.plan_date, p.due_date, b.subject, b.priority, p.kind, p.description,
-              IFNULL(p.page_from,0) pf, IFNULL(p.page_to,0) pt,
-              IFNULL(p.part_no,0) part, IFNULL(p.parts_total,0) parts, p.status
-       FROM plan p JOIN books b ON b.id = p.book_id ORDER BY p.plan_date, p.id`),
+  const [exams, homework, sched, books, prog] = await Promise.all([
     q(`SELECT e.id, b.subject s, e.exam_date d, e.covers c, e.status st, e.book_id
        FROM exams e JOIN books b ON b.id = e.book_id ORDER BY e.exam_date`),
     q(`SELECT h.id, b.subject s, h.description t, h.due_date d, h.status st, h.book_id
@@ -42,7 +40,7 @@ export async function getDashboardData(db) {
   for (const r of prog) { if (!bySub.has(r.subject)) bySub.set(r.subject, []); bySub.get(r.subject).push([r.d, r.pg]); }
   const pace = [...bySub.entries()].map(([s,pts],i)=>[s,pts,COLORS[i%COLORS.length]]);
   return {
-    plan: plan.map(r=>[r.id,r.plan_date,r.due_date,r.subject,r.priority,r.kind,r.description,r.pf,r.pt,r.part,r.parts,r.status]),
+    plan: [],
     exams, homework, schedule,
     books: books.map(b=>[b.subject,b.priority,b.lessons,b.taught,b.reviewed]), pace,
     meta: { updatedAt: new Date().toISOString() },
