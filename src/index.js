@@ -25,7 +25,7 @@ export default {
         return json({ok:r?.ok===1,service:"lesson-dashboard",time:new Date().toISOString()},200,origin);
       }
       if (url.pathname === "/api/data" && request.method === "GET") return json(await getDashboardData(env.DB),200,origin);
-      if (/^\/api\/(plan|homework|exams)(\/\d+)?$/.test(url.pathname)) {
+      if (/^\/api\/(homework|exams)(\/\d+)?$/.test(url.pathname)) {
         // Writes are disabled unless a server-side secret has been configured.
         // Never place WRITE_API_TOKEN in public frontend JavaScript.
         const token = env.WRITE_API_TOKEN;
