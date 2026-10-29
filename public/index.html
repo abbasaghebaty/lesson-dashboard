@@ -225,7 +225,7 @@ document.getElementById('stamp').textContent='آخرین به‌روزرسانی
 const vis=P.filter(r=>inWindow(r)||carry(r)),nx=DATA.exams.filter(e=>e.st==='upcoming'&&diff(e.d)>=1).sort((a,b)=>a.d<b.d?-1:1)[0];
 const tdy=P.filter(r=>r.pd===TODAY),tdn=tdy.filter(r=>r.st==='done').length;
 const upcomingExams=DATA.exams.filter(e=>e.st==='upcoming'&&diff(e.d)>=1).length;
-document.getElementById('stats').innerHTML=[[nx?(diff(nx.d)===1?'فردا':fa(diff(nx.d))+' روز'):'—',nx?'تا امتحان '+nx.s:'امتحانی نیست'],[fa(openHw().length),'تکالیف'],[fa(upcomingExams),'تعداد امتحان‌ها']].map(a=>`<div class="stat"><b>${a[0]}</b><span>${a[1]}</span></div>`).join('');
+document.getElementById('stats').innerHTML=[[nx?(diff(nx.d)===1?'فردا':fa(diff(nx.d))+' روز'):'—',nx?'تا امتحان '+nx.s:'امتحانی نیست'],[fa(upcomingExams),'تعداد امتحان‌ها'],[fa(openHw().length),'تکالیف']].map(a=>`<div class="stat"><b>${a[0]}</b><span>${a[1]}</span></div>`).join('');
 }
 async function refreshData({initial=false}={}) {
   const st=document.getElementById('stamp');
